@@ -125,6 +125,7 @@ struct InputBuffer {
 #define IB_ERR 0        // Sorry, unable to comply.
 #define IB_OK 1         // Ok, got the new char, did the operation, ...
 #define IB_GOTLINE 2    // Hey, now there is a well formed line to read.
+#define IB_EXIT 3       // 
 
 /* Append the specified character to the buffer. */
 int inputBufferAppend(struct InputBuffer *ib, int c) {
@@ -147,6 +148,7 @@ int inputBufferFeedChar(struct InputBuffer *ib, int c) {
     case '\n':
         break;          // Ignored. We handle \r instead.
     case '\r':
+        if (ib->len == 5 && (!strncmp("/exit", ib->buf, 5))) return IB_EXIT;
         return IB_GOTLINE;
     case 127:           // Backspace.
         if (ib->len > 0) {
@@ -240,6 +242,16 @@ int main(int argc, char **argv) {
                 for (int j = 0; j < count; j++) {
                     int res = inputBufferFeedChar(&ib,buf[j]);
                     switch(res) {
+                    case IB_EXIT:
+                        inputBufferAppend(&ib,'\n');
+                        inputBufferHide(&ib);
+                        write(fileno(stdout),"you> ", 5);
+                        write(fileno(stdout),ib.buf,ib.len);
+                        write(fileno(stdout),"Bye bye~", 8);
+                        write(s,ib.buf,ib.len);
+                        inputBufferClear(&ib);
+                        close(s);
+                        return 0;
                     case IB_GOTLINE:
                         inputBufferAppend(&ib,'\n');
                         inputBufferHide(&ib);

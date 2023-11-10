@@ -242,6 +242,14 @@ int main(void) {
                                 int nicklen = strlen(arg);
                                 c->nick = chatMalloc(nicklen+1);
                                 memcpy(c->nick,arg,nicklen+1);
+                            } else if (!strcmp(readbuf,"/exit")) {
+                                char msg[256];
+                                int msglen = snprintf(msg, sizeof(msg),
+                                    "%s> %s exited", "server", c->nick);
+                                sendMsgToAllClientsBut(j, msg, msglen);
+                                printf("Disconnected client fd=%d, nick=%s\n",
+                                j, Chat->clients[j]->nick);
+                                freeClient(c);
                             } else {
                                 /* Unsupported command. Send an error. */
                                 char *errmsg = "Unsupported command\n";
